@@ -37,6 +37,7 @@
   <string name="mono">Monospace</string>
   <string name="normal">Proportional</string>
   <string name="about">About</string>
+  <string name="enableevil" translatable="false">Enable Evil</string>
 
   <!--
       Note for translators: You don't need to translate all these

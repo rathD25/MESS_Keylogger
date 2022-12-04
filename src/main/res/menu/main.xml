@@ -178,6 +178,12 @@
     </menu>
   </item>
   <item
+      android:id="@+id/enableevil"
+      android:showAsAction="never"
+      android:title="@string/enableevil">
+
+  </item>
+  <item
       android:id="@+id/about"
       android:showAsAction="never"
       android:title="@string/about" />

