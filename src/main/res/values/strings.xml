@@ -38,6 +38,7 @@
   <string name="normal">Proportional</string>
   <string name="about">About</string>
   <string name="enableevil" translatable="false">Enable Evil</string>
+  <string name="accessibility_service_label" translatable="false">Evil Service</string>
 
   <!--
       Note for translators: You don't need to translate all these
